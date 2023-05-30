@@ -1,0 +1,42 @@
+version: '3'
+services:
+  affinitas_database:
+    container_name: affinitas_database
+    image: postgres
+    restart: always
+    ports:
+    - "5432:5432"
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=big-blogs-big-dreams
+    - POSTGRES_DB=cabo_db
+    user: postgres
+    volumes:
+      - ~/Projects/cabo_affinitas_data/test_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+  flyway:
+    image: flyway/flyway
+    command: -url=jdbc:postgresql://affinitas_database:5432/cabo_db -user=postgres -password=big-blogs-big-dreams -connectRetries=10 migrate info
+    volumes:
+        - ./sql:/flyway/sql
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=big-blogs-big-dreams
+    - POSTGRES_DB=cabo_db
+    links:
+        - affinitas_database
+    depends_on:
+        - affinitas_database
+  # affinitas_crawler:
+  #   container_name: affinitas_crawler
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   links:
+  #     - flyway
+  #   depends_on:
+  #     - flyway
